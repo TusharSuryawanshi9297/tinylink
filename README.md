@@ -7,7 +7,7 @@ Built using Node.js, Express, EJS, Tailwind CSS, and Neon (PostgreSQL).
 
 ## 🚀 Live Demo
 
-🔗 Hosted URL: <deployment link here after deployment>
+🔗 Hosted URL: https://tinylink-ng16.onrender.com/
 
 ## 📌 Features
 
@@ -33,7 +33,7 @@ BASE_URL=https://your-render-url # used to build short link display
 
 ## 🧪 Local Setup
 
-git clone https://github.com/TusharSuryawanshi9297/tinylink.git
+git clone https://github.com/TusharSuryawanshi9297/TinyLink.git
 cd tinylink
 npm install
 cp .env.example .env
