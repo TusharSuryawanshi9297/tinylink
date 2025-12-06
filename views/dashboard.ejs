@@ -1,0 +1,184 @@
+<%- include("partials/header") %>
+
+<div class="max-w-5xl mx-auto mt-10">
+  <!-- Create Short Link Form -->
+  <div class="bg-white p-8 rounded-2xl shadow-lg">
+    <h2 class="text-2xl font-semibold mb-6">Create Short Link</h2>
+
+    <form id="addForm" class="grid gap-4 md:grid-cols-3">
+      <input
+        id="url"
+        class="border border-gray-300 px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+        placeholder="Enter long URL (include http:// or https://)"
+        required
+      />
+      <input
+        id="code"
+        class="border border-gray-300 px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+        placeholder="Custom code (6–8 characters)"
+        required
+      />
+      <button
+        class="bg-blue-600 text-white rounded-lg px-6 py-3 font-medium hover:bg-blue-700 transition-colors duration-200"
+      >
+        Create
+      </button>
+    </form>
+  </div>
+
+  <!-- All Links Table -->
+  <div class="mt-12 bg-white p-8 rounded-2xl shadow-lg">
+    <h2 class="text-2xl font-semibold mb-6">All Links</h2>
+
+    <div class="overflow-x-auto">
+      <table class="w-full table-auto border-collapse text-left">
+        <thead>
+          <tr
+            class="border-b bg-gray-50 text-gray-600 text-sm uppercase tracking-wider"
+          >
+            <th class="py-3 px-2">Code</th>
+            <th class="py-3 px-2">Shortlink</th>
+            <th class="py-3 px-2">Target URL</th>
+            <th class="py-3 px-2">Clicks</th>
+            <th class="py-3 px-2">Last Clicked</th>
+            <th class="py-3 px-2">Action</th>
+          </tr>
+        </thead>
+        <tbody class="text-gray-700">
+          <% if (!links.length) { %>
+          <tr>
+            <td colspan="6" class="text-center py-6 text-gray-400">
+              No links yet
+            </td>
+          </tr>
+          <% } %> <% links.forEach(l => { %>
+          <tr class="border-b hover:bg-gray-50 transition-colors">
+            <td class="py-3 font-medium text-blue-600">
+              <a href="/code/<%= l.code %>" class="hover:underline"
+                ><%= l.code %></a
+              >
+            </td>
+            <td
+              class="py-3 text-indigo-600 text-sm hover:underline cursor-pointer"
+            >
+              <a onclick="openShortLink('<%= l.code %>')">
+                <%= `${(process.env.BASE_URL ||
+                window.location.origin)}/${l.code}` %>
+              </a>
+            </td>
+            <td class="py-3 truncate max-w-xs text-sm">
+              <a
+                href="<%= l.url %>"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="hover:underline text-gray-700"
+              >
+                <%= l.url %>
+              </a>
+            </td>
+            <td class="py-3 font-medium"><%= l.click_count %></td>
+            <td class="py-3 text-sm">
+              <%= l.last_clicked ? new
+              Date(l.last_clicked).toLocaleString("en-IN", { timeZone:
+              "Asia/Kolkata" }) : "-" %>
+            </td>
+            <td class="py-3 space-x-4">
+              <button
+                onclick="copyLink('<%= l.code %>')"
+                class="text-blue-600 hover:underline font-medium"
+              >
+                Copy
+              </button>
+              <button
+                onclick="deleteLink('<%= l.code %>')"
+                class="text-red-600 hover:underline font-medium"
+              >
+                Delete
+              </button>
+            </td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Toast Notification -->
+<div
+  id="toast"
+  class="fixed top-6 right-6 hidden max-w-sm w-auto px-6 py-3 rounded-2xl shadow-2xl text-gray-900 font-medium flex items-center space-x-3 transition-all duration-300 transform translate-y-5 opacity-0 z-50"
+></div>
+
+<script>
+  function toast(message, type = "success") {
+    const t = document.getElementById("toast");
+    t.textContent = "";
+
+    let icon = type === "success" ? "✅" : "❌";
+    t.textContent = `${icon} ${message}`;
+
+    t.classList.remove("hidden", "translate-y-[-20px]", "opacity-0");
+    t.classList.add("translate-y-0", "opacity-100");
+
+    t.style.backgroundColor = "#ffffff";
+    t.style.color = "#111827"; // Tailwind gray-900
+    t.style.boxShadow = "0 10px 25px rgba(0,0,0,0.15)";
+
+    setTimeout(() => {
+      t.classList.add("translate-y-[-20px]", "opacity-0");
+      setTimeout(() => t.classList.add("hidden"), 300);
+    }, 1800);
+  }
+
+  document.getElementById("addForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const url = document.getElementById("url").value.trim();
+    const code = document.getElementById("code").value.trim();
+
+    const res = await fetch("/api/links", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url, code }),
+    });
+
+    const d = await res.json().catch(() => null);
+
+    if (res.status === 201) {
+      toast("Shortlink created successfully", "success");
+      setTimeout(() => location.reload(), 800);
+    } else {
+      toast(d?.error || "Error creating shortlink", "error");
+    }
+  });
+
+  function copyLink(code) {
+    const base = window.location.origin;
+    navigator.clipboard.writeText(`${base}/${code}`);
+    toast("Shortlink copied to clipboard", "success");
+  }
+
+  async function deleteLink(code) {
+    if (!confirm("Delete this link?")) return;
+    const res = await fetch("/api/links/" + code, { method: "DELETE" });
+    if (res.status === 200) {
+      toast("Link deleted successfully", "success");
+      setTimeout(() => location.reload(), 800);
+    } else {
+      const d = await res.json().catch(() => null);
+      toast(d?.error || "Delete failed", "error");
+    }
+  }
+
+  function openShortLink(code) {
+    const tab = window.open(`/${code}`, "_blank");
+    const timer = setInterval(() => {
+      if (tab.closed) {
+        clearInterval(timer);
+        location.reload();
+      }
+    }, 500);
+  }
+</script>
+
+<%- include("partials/footer") %>

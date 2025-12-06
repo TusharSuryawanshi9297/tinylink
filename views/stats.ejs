@@ -1,0 +1,85 @@
+<%- include("partials/header") %>
+
+<div
+  class="max-w-3xl mx-auto mt-10 bg-white p-8 rounded-2xl shadow-lg space-y-6"
+>
+  <h2 class="text-2xl font-bold mb-4">Link Statistics</h2>
+
+  <div class="space-y-2 text-gray-700 text-sm">
+    <p>
+      <span class="font-semibold">Code:</span>
+      <span class="text-blue-600"><%= link.code %></span>
+    </p>
+    <p>
+      <span class="font-semibold">URL:</span>
+      <a
+        href="<%= link.url %>"
+        target="_blank"
+        class="text-indigo-600 hover:underline"
+      >
+        <%= link.url %>
+      </a>
+    </p>
+    <p>
+      <span class="font-semibold">Total Clicks:</span> <%= link.click_count %>
+    </p>
+    <p>
+      <span class="font-semibold">Last Clicked:</span>
+      <%= link.last_clicked ? new
+      Date(link.last_clicked).toLocaleString("en-IN", { timeZone: "Asia/Kolkata"
+      }) : "-" %>
+    </p>
+    <p>
+      <span class="font-semibold">Created:</span>
+      <%= new Date(link.created_at).toLocaleString("en-IN", { timeZone:
+      "Asia/Kolkata" }) %>
+    </p>
+  </div>
+
+  <div class="flex items-center space-x-4 mt-4">
+    <button
+      onclick="copyLink('<%= link.code %>')"
+      class="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors duration-200"
+    >
+      Copy Shortlink
+    </button>
+    <a href="/" class="text-blue-600 hover:underline font-medium"
+      >Back to Dashboard</a
+    >
+  </div>
+</div>
+
+<!-- Toast Notification -->
+<div
+  id="toast"
+  class="fixed top-6 right-6 hidden max-w-sm w-auto px-6 py-3 rounded-2xl shadow-2xl text-gray-900 font-medium flex items-center space-x-3 transition-all duration-300 transform translate-y-[-20px] opacity-0 z-50"
+></div>
+
+<script>
+  function toast(message, type = "success") {
+    const t = document.getElementById("toast");
+    t.textContent = "";
+
+    let icon = type === "success" ? "✅" : "❌";
+    t.textContent = `${icon} ${message}`;
+
+    t.classList.remove("hidden", "translate-y-[-20px]", "opacity-0");
+    t.classList.add("translate-y-0", "opacity-100");
+
+    t.style.backgroundColor = "#ffffff";
+    t.style.color = "#111827"; // Tailwind gray-900
+    t.style.boxShadow = "0 10px 25px rgba(0,0,0,0.15)";
+
+    setTimeout(() => {
+      t.classList.add("translate-y-[-20px]", "opacity-0");
+      setTimeout(() => t.classList.add("hidden"), 300);
+    }, 1800);
+  }
+
+  function copyLink(code) {
+    navigator.clipboard.writeText(`${location.origin}/${code}`);
+    toast("Shortlink copied to clipboard", "success");
+  }
+</script>
+
+<%- include("partials/footer") %>
